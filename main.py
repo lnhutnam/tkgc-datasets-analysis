@@ -3,44 +3,116 @@ from collections import defaultdict
 
 from utils.datasets import TKG
 
-from relation_properties.simultaneousness_relpatterns import (
-    check_symmetry,
-    check_reflexivity,
-    check_transitivity,
+from relation_properties.SimultaneousnessRelpatterns import (
+    checking_symmetric,
+    # checking_antisymmetric,
+    checking_inverse,
+    checking_composition,
+)
+from relation_properties.CrosstimeRelpatterns import (
+    ct_check_inversion,
+    ct_check_hierarchy,
+    ct_check_intersion,
+    ct_check_composition, 
+    ct_mutual_exclusion
 )
 
+import pandas as pd
 
-def main(root: str, name: str):
-    dataset = TKG(root, name)
-    print(dataset.num_entities)
-    print("Computing the mappings <relation name -> type> in %s training set..." % name)
 
-    relation_2_types = defaultdict(lambda: [])
+def export2file(quadruples, filename: str = "output.txt"):
+    with open(filename, "w") as f:
+        for s, r, o, t in quadruples:
+            f.write(f"{s}\t{r}\t{o}\t{t}\n")
+        f.close()
+    return True
 
-    relation_2_facts = defaultdict(lambda: set())
-    head_2_facts = defaultdict(lambda: set())
 
-    for head, relation, tail, tau in dataset.test_quadruples:
-        relation_2_facts[relation].add((head, relation, tail, tau))
-        head_2_facts[head].add((head, relation, tail, tau))
+def mining_ctrel(root: str, name: str):
+    graph = TKG(root, name)
+    print(f"Number of entities: {graph.num_entities}")
+    print(f"Number of relations: {graph.num_relations}")
+    print(f"Number of timestamp: {graph.num_timestamps}")
+    print(f"Mining cross time relation patterns... on testing set of {graph.name}")
 
-    for relation in dataset.relationships:
-        relation_2_types[relation] = []
+    ent_lst = graph.entities
+    rel_lst = graph.relations
+    ts_lst  = graph.timestamps
+    
+    rel_2_facts = defaultdict(lambda: set())
 
-        # is_reflexive = check_reflexivity(relation, relation_2_facts)
-        # is_symmetric = check_symmetry(relation, relation_2_facts)
-        is_transitive = check_transitivity(relation, relation_2_facts, head_2_facts)
+    for s, r, o, t in graph.test_quadruples:
+        rel_2_facts[r].add((s, r, o, t))
 
-        # if is_reflexive is not None:
-        #     relation_2_types[relation].append(is_reflexive)
+    # checking for ct inversion
+    ct_invs = []
+    for rel1 in graph.relations:
+        for rel2 in graph.relations:
+            if rel1 != rel2:
+                ct_invs += list(ct_check_inversion(rel1, rel2, rel_2_facts, graph))
+                
+    export2file(ct_invs, "ct_invs")
+    
+    
+    # checking for ct inversion
+    ct_hierarchy = []
+    for rel1 in graph.relations:
+        for rel2 in graph.relations:
+            if rel1 != rel2:
+                ct_hierarchy += list(ct_check_inversion(rel1, rel2, rel_2_facts, graph))
+                
+    export2file(ct_hierarchy, "ct_hierarchy")
+    
 
-        # if is_symmetric is not None:
-        #     relation_2_types[relation].append(is_symmetric)
 
-        if is_transitive is not None:
-            relation_2_types[relation].append(is_transitive)
+def mining_simurel(root: str, name: str):
+    graph = TKG(root, name)
 
-    return relation_2_types
+    print(f"Number of entities: {graph.num_entities}")
+    print(f"Number of relations: {graph.num_relations}")
+    print(f"Number of timestamp: {graph.num_timestamps}")
+    print(
+        f"Mining simultaneousness relation patterns... on testing set of {graph.name}"
+    )
+
+    rel_2_facts = defaultdict(lambda: set())
+    rel_2_types = defaultdict(lambda: [])
+
+    for s, r, o, t in graph.test_quadruples:
+        rel_2_facts[r].add((s, r, o, t))
+
+    # checking for symmetry
+    # syms = []
+    # for rel in graph.relations:
+    #     syms += list(checking_symmetric(rel, rel_2_facts))
+
+    # export2file(syms, "syms")
+
+    # # checking for anti-symmetry
+    # syms = []
+    # for rel in graph.relations:
+    #     syms += list(checking_antisymmetric(rel, rel_2_facts))
+
+    # export2file(syms, "anti_syms")
+
+    # checking for inversion
+    invs = []
+    for rel1 in graph.relations:
+        for rel2 in graph.relations:
+            if rel1 != rel2:
+                invs += list(checking_inverse(rel1, rel2, rel_2_facts))
+
+    export2file(invs, "invs")
+
+    # checking for composition
+    # comps = []
+    # for rel1 in graph.relations:
+    #     for rel2 in graph.relations:
+    #         for rel3 in graph.relations:
+    #             if rel1 != rel2 and rel1 != rel3 and rel2 != rel3:
+    #                 comps += list(checking_composition(rel1, rel2, rel3, rel_2_facts))
+
+    # export2file(comps, "comps")
 
 
 if __name__ == "__main__":
@@ -49,9 +121,12 @@ if __name__ == "__main__":
         usage="learner.py [<args>] [-h | --help]",
     )
     parser.add_argument("--data_root", type=str, default=".")
-    parser.add_argument("--dataset", type=str, default="GDELT")
+    parser.add_argument("--dataset", type=str, default="ICEWS05-15")
     args = parser.parse_args()
     print(args)
-    relation_2_types = main(args.data_root, args.dataset)
-    for key, value in relation_2_types.items():
-        print(value)
+    # relation_2_types = main(args.data_root, args.dataset)
+    # for key, value in relation_2_types.items():
+    #     print(value)
+
+    mining_ctrel(args.data_root, args.dataset)
+    # mining_simurel(args.data_root, args.dataset)

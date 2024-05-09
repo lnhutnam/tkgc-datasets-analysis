@@ -1,4 +1,6 @@
 import os
+from collections import defaultdict
+from datetime import datetime
 
 
 class TKG:
@@ -16,7 +18,7 @@ class TKG:
         self.test_path = os.path.join(self.home, "test")
 
         self.entities = set()
-        self.relationships = set()
+        self.relations = set()
         self.timestamps = set()
 
         print("Reading train quadruples for %s..." % self.name)
@@ -27,7 +29,7 @@ class TKG:
         self.test_quadruples = self._read_quadruples(self.test_path, separator)
 
         self.num_entities = len(self.entities)
-        self.num_relations = len(self.relationships)
+        self.num_relations = len(self.relations)
         self.num_timestamps = len(self.timestamps)
 
     def _read_quadruples(self, quadruples_path, separator="\t"):
@@ -35,12 +37,38 @@ class TKG:
         with open(quadruples_path, "r") as quadruples_file:
             lines = quadruples_file.readlines()
             for line in lines:
-                # line = html.unescape(line)
-                head, relationship, tail, tau = line.strip().split(separator)
-                quadruples.append((head, relationship, tail, tau))
+                head, relation, tail, tau = line.strip().split(separator)
+                quadruples.append((head, relation, tail, tau))
                 self.entities.add(head)
                 self.entities.add(tail)
-                self.relationships.add(relationship)
+                self.relations.add(relation)
                 self.timestamps.add(tau)
 
         return quadruples
+
+    def get_stat(
+        self,
+    ):
+        num_entities = self.num_entities
+        num_relations = self.num_relations
+        num_timestamps = self.num_timestamps
+        ts_lst = [datetime.strptime(day, "%Y-%m-%d") for day in self.timestamps]
+        min_timestamps = min(ts_lst)
+        max_timestamps = max(ts_lst)
+
+        return (
+            num_entities,
+            num_relations,
+            num_timestamps,
+            min_timestamps,
+            max_timestamps,
+        )
+
+    def get_facts_at(self, inp_tau):
+
+        facts = set()
+        for head, relation, tail, tau in self.test_quadruples:
+            if tau == inp_tau:
+                facts.add((head, relation, tail, tau))
+
+        return facts
