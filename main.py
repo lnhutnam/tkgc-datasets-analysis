@@ -5,14 +5,14 @@ from utils.datasets import TKG
 
 from relation_properties.SimultaneousnessRelpatterns import (
     checking_symmetric,
-    # checking_antisymmetric,
+    checking_antisymmetric,
     checking_inverse,
     checking_composition,
 )
 from relation_properties.CrosstimeRelpatterns import (
     ct_check_inversion,
     ct_check_hierarchy,
-    ct_check_intersion,
+    ct_check_intersection,
     ct_check_composition, 
     ct_mutual_exclusion
 )
@@ -28,7 +28,7 @@ def export2file(quadruples, filename: str = "output.txt"):
     return True
 
 
-def mining_ctrel(root: str, name: str):
+def mining_ctrel(root: str, name: str,):
     graph = TKG(root, name)
     print(f"Number of entities: {graph.num_entities}")
     print(f"Number of relations: {graph.num_relations}")
@@ -50,18 +50,44 @@ def mining_ctrel(root: str, name: str):
         for rel2 in graph.relations:
             if rel1 != rel2:
                 ct_invs += list(ct_check_inversion(rel1, rel2, rel_2_facts, graph))
-                
-    export2file(ct_invs, "ct_invs")
+     
+    ct_invs = list(set(ct_invs))           
+    export2file(ct_invs, graph.home + "/ct_invs")
     
     
-    # checking for ct inversion
+    # checking for ct hierarchy
     ct_hierarchy = []
     for rel1 in graph.relations:
         for rel2 in graph.relations:
             if rel1 != rel2:
                 ct_hierarchy += list(ct_check_inversion(rel1, rel2, rel_2_facts, graph))
-                
-    export2file(ct_hierarchy, "ct_hierarchy")
+             
+    ct_hierarchy = list(set(ct_hierarchy))   
+    export2file(ct_hierarchy, graph.home + "/ct_hierarchy")
+    
+    
+    # checking for intersection
+    intersection = []
+    for rel1 in graph.relations:
+        for rel2 in graph.relations:
+            for rel3 in graph.relations:
+                if rel1 != rel2 and rel1 != rel3 and rel2 != rel3:
+                    intersection += list(ct_check_intersection(rel1, rel2, rel3, rel_2_facts, graph))
+
+    intersection = list(set(intersection))
+    export2file(intersection, graph.home + "/ct_intersection")
+    
+    
+    # checking for intersection
+    comps = []
+    for rel1 in graph.relations:
+        for rel2 in graph.relations:
+            for rel3 in graph.relations:
+                if rel1 != rel2 and rel1 != rel3 and rel2 != rel3:
+                    comps += list(ct_check_composition(rel1, rel2, rel3, rel_2_facts, graph))
+
+    comps = list(set(comps))
+    export2file(comps, graph.home + "/ct_comps")
     
 
 
@@ -82,37 +108,41 @@ def mining_simurel(root: str, name: str):
         rel_2_facts[r].add((s, r, o, t))
 
     # checking for symmetry
-    # syms = []
-    # for rel in graph.relations:
-    #     syms += list(checking_symmetric(rel, rel_2_facts))
+    syms = []
+    for rel in graph.relations:
+        syms += list(checking_symmetric(rel, rel_2_facts, graph))
 
-    # export2file(syms, "syms")
+    syms = list(set(syms))
+    export2file(syms, graph.home + "/syms")
 
-    # # checking for anti-symmetry
-    # syms = []
-    # for rel in graph.relations:
-    #     syms += list(checking_antisymmetric(rel, rel_2_facts))
+    # checking for anti-symmetry
+    antisyms = []
+    for rel in graph.relations:
+        antisyms += list(checking_antisymmetric(rel, rel_2_facts, graph))
 
-    # export2file(syms, "anti_syms")
+    antisyms = list(set(antisyms))
+    export2file(antisyms, graph.home + "/anti_syms")
 
     # checking for inversion
     invs = []
     for rel1 in graph.relations:
         for rel2 in graph.relations:
             if rel1 != rel2:
-                invs += list(checking_inverse(rel1, rel2, rel_2_facts))
+                invs += list(checking_inverse(rel1, rel2, rel_2_facts, graph))
 
-    export2file(invs, "invs")
+    invs = list(set(invs))
+    export2file(invs, graph.home + "/invs")
 
     # checking for composition
-    # comps = []
-    # for rel1 in graph.relations:
-    #     for rel2 in graph.relations:
-    #         for rel3 in graph.relations:
-    #             if rel1 != rel2 and rel1 != rel3 and rel2 != rel3:
-    #                 comps += list(checking_composition(rel1, rel2, rel3, rel_2_facts))
+    comps = []
+    for rel1 in graph.relations:
+        for rel2 in graph.relations:
+            for rel3 in graph.relations:
+                if rel1 != rel2 and rel1 != rel3 and rel2 != rel3:
+                    comps += list(checking_composition(rel1, rel2, rel3, rel_2_facts))
 
-    # export2file(comps, "comps")
+    comps = list(set(comps))
+    export2file(comps, graph.home + "/comps")
 
 
 if __name__ == "__main__":
@@ -124,6 +154,9 @@ if __name__ == "__main__":
     parser.add_argument("--dataset", type=str, default="ICEWS05-15")
     args = parser.parse_args()
     print(args)
+    
+    # graph = TKG(args.data_root, args.dataset)
+    
     # relation_2_types = main(args.data_root, args.dataset)
     # for key, value in relation_2_types.items():
     #     print(value)

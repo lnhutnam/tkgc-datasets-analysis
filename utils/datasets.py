@@ -21,16 +21,26 @@ class TKG:
         self.relations = set()
         self.timestamps = set()
 
-        print("Reading train quadruples for %s..." % self.name)
-        self.train_quadruples = self._read_quadruples(self.train_path, separator)
-        print("Reading validation quadruples for %s..." % self.name)
-        self.valid_quadruples = self._read_quadruples(self.valid_path, separator)
-        print("Reading test quadruples for %s..." % self.name)
-        self.test_quadruples = self._read_quadruples(self.test_path, separator)
+        if name == "YAGO15k":
+            print("Reading train quadruples for %s..." % self.name)
+            self.train_quadruples = self._read_quadruples_yago(self.train_path, separator)
+            print("Reading validation quadruples for %s..." % self.name)
+            self.valid_quadruples = self._read_quadruples_yago(self.valid_path, separator)
+            print("Reading test quadruples for %s..." % self.name)
+            self.test_quadruples = self._read_quadruples_yago(self.test_path, separator)
+        
+        else:
+            print("Reading train quadruples for %s..." % self.name)
+            self.train_quadruples = self._read_quadruples(self.train_path, separator)
+            print("Reading validation quadruples for %s..." % self.name)
+            self.valid_quadruples = self._read_quadruples(self.valid_path, separator)
+            print("Reading test quadruples for %s..." % self.name)
+            self.test_quadruples = self._read_quadruples(self.test_path, separator)
 
         self.num_entities = len(self.entities)
         self.num_relations = len(self.relations)
         self.num_timestamps = len(self.timestamps)
+        print(len(self.test_quadruples))
 
     def _read_quadruples(self, quadruples_path, separator="\t"):
         quadruples = []
@@ -45,7 +55,23 @@ class TKG:
                 self.timestamps.add(tau)
 
         return quadruples
-
+    
+    def _read_quadruples_yago(self, quadruples_path, separator="\t"):
+        quadruples = []
+        with open(quadruples_path, "r") as quadruples_file:
+            lines = quadruples_file.readlines()
+            for line in lines:
+                fact = line.strip().split(separator)
+                if len(fact) == 5:
+                    head, relation, tail, _, tau = fact
+                    quadruples.append((head, relation, tail, tau))
+                    self.entities.add(head)
+                    self.entities.add(tail)
+                    self.relations.add(relation)
+                    self.timestamps.add(tau)
+                    
+        return quadruples
+                    
     def get_stat(
         self,
     ):
