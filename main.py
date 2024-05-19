@@ -17,6 +17,10 @@ from relation_properties.CrosstimeRelpatterns import (
     ct_mutual_exclusion
 )
 
+from relation_properties.Aggregation import (
+    checking_aggregation,
+)
+
 import pandas as pd
 
 
@@ -145,6 +149,28 @@ def mining_simurel(root: str, name: str):
     export2file(comps, graph.home + "/comps")
 
 
+def mining_aggregation(root: str, name: str):
+    graph = TKG(root, name)
+
+    print(f"Number of entities: {graph.num_entities}")
+    print(f"Number of relations: {graph.num_relations}")
+    print(f"Number of timestamp: {graph.num_timestamps}")
+    print(
+        f"Mining aggregation patterns... on testing set of {graph.name}"
+    )
+
+    aggregation = []
+    for ent in graph.entities:
+        aggregation += list(checking_aggregation(ent, graph))
+
+    print(len(aggregation))
+    
+    # print(graph.valid_quadruples)
+
+    
+        
+        
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Relation type extraction for Temporal knowledge graphs.",
@@ -161,5 +187,6 @@ if __name__ == "__main__":
     # for key, value in relation_2_types.items():
     #     print(value)
 
-    mining_ctrel(args.data_root, args.dataset)
+    # mining_ctrel(args.data_root, args.dataset)
     # mining_simurel(args.data_root, args.dataset)
+    mining_aggregation(args.data_root, args.dataset)
