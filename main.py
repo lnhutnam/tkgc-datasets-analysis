@@ -13,8 +13,8 @@ from relation_properties.CrosstimeRelpatterns import (
     ct_check_inversion,
     ct_check_hierarchy,
     ct_check_intersection,
-    ct_check_composition, 
-    ct_mutual_exclusion
+    ct_check_composition,
+    ct_mutual_exclusion,
 )
 
 from relation_properties.Aggregation import (
@@ -35,7 +35,10 @@ def export2file(quadruples, filename: str = "output.txt"):
     return True
 
 
-def mining_ctrel(root: str, name: str,):
+def mining_ctrel(
+    root: str,
+    name: str,
+):
     graph = TKG(root, name)
     print(f"Number of entities: {graph.num_entities}")
     print(f"Number of relations: {graph.num_relations}")
@@ -44,8 +47,8 @@ def mining_ctrel(root: str, name: str,):
 
     ent_lst = graph.entities
     rel_lst = graph.relations
-    ts_lst  = graph.timestamps
-    
+    ts_lst = graph.timestamps
+
     rel_2_facts = defaultdict(lambda: set())
 
     for s, r, o, t in graph.test_quadruples:
@@ -57,45 +60,45 @@ def mining_ctrel(root: str, name: str,):
         for rel2 in graph.relations:
             if rel1 != rel2:
                 ct_invs += list(ct_check_inversion(rel1, rel2, rel_2_facts, graph))
-     
-    ct_invs = list(set(ct_invs))           
+
+    ct_invs = list(set(ct_invs))
     export2file(ct_invs, graph.home + "/ct_invs")
-    
-    
+
     # checking for ct hierarchy
     ct_hierarchy = []
     for rel1 in graph.relations:
         for rel2 in graph.relations:
             if rel1 != rel2:
                 ct_hierarchy += list(ct_check_inversion(rel1, rel2, rel_2_facts, graph))
-             
-    ct_hierarchy = list(set(ct_hierarchy))   
+
+    ct_hierarchy = list(set(ct_hierarchy))
     export2file(ct_hierarchy, graph.home + "/ct_hierarchy")
-    
-    
+
     # checking for intersection
     intersection = []
     for rel1 in graph.relations:
         for rel2 in graph.relations:
             for rel3 in graph.relations:
                 if rel1 != rel2 and rel1 != rel3 and rel2 != rel3:
-                    intersection += list(ct_check_intersection(rel1, rel2, rel3, rel_2_facts, graph))
+                    intersection += list(
+                        ct_check_intersection(rel1, rel2, rel3, rel_2_facts, graph)
+                    )
 
     intersection = list(set(intersection))
     export2file(intersection, graph.home + "/ct_intersection")
-    
-    
+
     # checking for intersection
     comps = []
     for rel1 in graph.relations:
         for rel2 in graph.relations:
             for rel3 in graph.relations:
                 if rel1 != rel2 and rel1 != rel3 and rel2 != rel3:
-                    comps += list(ct_check_composition(rel1, rel2, rel3, rel_2_facts, graph))
+                    comps += list(
+                        ct_check_composition(rel1, rel2, rel3, rel_2_facts, graph)
+                    )
 
     comps = list(set(comps))
     export2file(comps, graph.home + "/ct_comps")
-    
 
 
 def mining_simurel(root: str, name: str):
@@ -158,28 +161,19 @@ def mining_aggregation(root: str, name: str):
     print(f"Number of entities: {graph.num_entities}")
     print(f"Number of relations: {graph.num_relations}")
     print(f"Number of timestamp: {graph.num_timestamps}")
-    print(
-        f"Mining aggregation patterns... on testing set of {graph.name}"
-    )
+    print(f"Mining aggregation patterns... on testing set of {graph.name}")
 
-    # aggregation = []
-    # for ent in graph.entities:
-    #     aggregation += list(checking_aggregation(ent, graph))
+    aggregation = []
+    for ent in graph.entities:
+        aggregation += list(checking_aggregation(ent, graph))
 
-    # print(len(aggregation))
+    aggregation = list(set(aggregation))
+    export2file(aggregation, graph.home + "/aggregation")
 
+    associativity += list(checking_associativity(graph))
+    associativity = list(set(associativity))
+    export2file(associativity, graph.home + "/associativity")
 
-    associativity = []
-    for ts in graph.timestamps:
-        for rel in graph.relations:
-            associativity += list(checking_associativity(graph))
-            
-    print(len(associativity))
-            
-
-    
-        
-        
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -190,9 +184,9 @@ if __name__ == "__main__":
     parser.add_argument("--dataset", type=str, default="ICEWS05-15")
     args = parser.parse_args()
     print(args)
-    
+
     # graph = TKG(args.data_root, args.dataset)
-    
+
     # relation_2_types = main(args.data_root, args.dataset)
     # for key, value in relation_2_types.items():
     #     print(value)
