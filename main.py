@@ -20,6 +20,9 @@ from relation_properties.CrosstimeRelpatterns import (
 from relation_properties.Aggregation import (
     checking_aggregation,
 )
+from relation_properties.Associativity import (
+    checking_associativity,
+)
 
 import pandas as pd
 
@@ -159,13 +162,20 @@ def mining_aggregation(root: str, name: str):
         f"Mining aggregation patterns... on testing set of {graph.name}"
     )
 
-    aggregation = []
-    for ent in graph.entities:
-        aggregation += list(checking_aggregation(ent, graph))
+    # aggregation = []
+    # for ent in graph.entities:
+    #     aggregation += list(checking_aggregation(ent, graph))
 
-    print(len(aggregation))
-    
-    # print(graph.valid_quadruples)
+    # print(len(aggregation))
+
+
+    associativity = []
+    for ts in graph.timestamps:
+        for rel in graph.relations:
+            associativity += list(checking_associativity(graph))
+            
+    print(len(associativity))
+            
 
     
         
